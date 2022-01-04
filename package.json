@@ -1,0 +1,20 @@
+{
+  "name": "ufc-fighter-api",
+  "version": "1.0.0",
+  "description": "A nodejs application that scrapes UFC fighter stats and exposes endpoints which developers can use to access said stats.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "sudo systemctl enable mongod && sudo systemctl start mongod && sudo nodemon node mongo.js"
+  },
+  "author": "Felix Ezama-Vaughan",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
+    "jsdom": "^19.0.0",
+    "md5": "^2.3.0",
+    "mongoose": "^6.1.4"
+  }
+}
