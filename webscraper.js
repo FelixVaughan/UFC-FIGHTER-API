@@ -5,12 +5,13 @@ var dotenv = require('dotenv');
 var Fighter = require('./fighter');
 const mongoose = require('mongoose'); 
 const schema = require('./schema');
+const cron = require('node-cron');
 
 const app = express();
 const {JSDOM} = jsdom;
 dotenv.config();
 schema.loadClass(Fighter);
-const SaveableFighter = mongoose.model('Fighter', schema);
+const _Fighter = mongoose.model('Fighter', schema);
 
 app.use(express.json());
 mongoose.connect(`mongodb://localhost:${process.env.DBPORT}`,
@@ -23,7 +24,7 @@ mongoose.connect(`mongodb://localhost:${process.env.DBPORT}`,
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error: "));
 db.once("open", () => {
-  console.log(`Mongo connection establised on port ${process.env.DBPORT}`);
+  console.log(`Webscraper connection establised on port ${process.env.DBPORT}`);
 });
 
 const BASE_URl = "http://ufcstats.com/statistics/fighters" 
@@ -52,14 +53,13 @@ var parseFighter = async (row) => {
             s = s.map(x => x.trim());
             var fighter = new Fighter(s[0],s[1],s[2],s[3],s[4],s[5],s[6],s[7],s[8],s[9],s[10]);
             await fighter.setFighterStats(fightStatsUrl);
-            console.log(fighter)
             //check if f exists in db with same code. if not save.
             let query = {code: fighter.code}
-            const fighterInDB = await SaveableFighter.findOne(query)
-            const newInstance = new SaveableFighter(fighter);
+            const fighterInDB = await _Fighter.findOne(query);
+            const newInstance = new _Fighter(fighter);
             if(fighterInDB) {
                 if(fighterInDB._id.equals(newInstance._id)){
-                    SaveableFighter.deleteOne(query, (err) => {
+                    _Fighter.deleteOne(query, (err) => {
                         if(err) console.log(err);
                         else console.log("Successful deletion");
                     });
@@ -77,7 +77,7 @@ var parseFighter = async (row) => {
 
 
 
-var scrapeSite = async () => {
+var scrape = async () => {
     const alphabet = 'abcdefghijklmnopqrstuvwxyz';
     var urlModifier = (index) => `${BASE_URl}?char=${index}&page=all`;
     for(const a of alphabet){
@@ -98,4 +98,7 @@ var scrapeSite = async () => {
     }
 }
 
-scrapeSite() //should be run periodically via cron
+if (process.env.DEV == "True") 
+    scrape();
+else 
+    cron.schedule('0 0 * * *', scrape);
