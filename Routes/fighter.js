@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const schema = require('../schema');
 var dotenv = require('dotenv');
 dotenv.config();
-app = express.Router();
+route = express.Router();
 
 mongoose.connect(`mongodb://localhost:${process.env.DBPORT}`,
   {
@@ -22,22 +22,59 @@ db.once("open", () => {
 schema.loadClass(Fighter);
 const _Fighter = mongoose.model('Fighter', schema);
 
-app.get('/', (req, res) => {
-    let firstname = req.query.firstName;
-    let lastname =  req.query.lastName;
-    if(firstname && lastname){
-        console.log(firstname+" "+lastname);
-        _Fighter.findOne({firstName: firstname, lastName:lastname}, (err,fighter) => { 
-            if(err){
-                console.log(err);
-            }
-            res.send(JSON.stringify(fighter, undefined, 4)); 
-        });
 
+var handleRequestQuery = async (queryString) => {
+    const numberedKeys = ['wins', 'losses', 'draws','weight', 'height', 'reach'];
+    const stringKeys = ['firstName', 'lastName'];
+    const allowedKeys = numberedKeys.concat(stringKeys, ['code'])
+    let droppedKeys = {};
+    let queryObject = {};
+    let validNumber = (num) => !isNaN(num);
+    let validString = (str) => (str.length > 0) &&  /^[A-Za-z]*$/.test(str);
+    let splitNumerical = (num) => num.toString().split('.');
+    for(const i in allowedKeys){
+        let currentKey = allowedKeys[i];
+        let value = queryString[currentKey];
+        if(!value) continue;
+        if (stringKeys.includes(currentKey) && validString(value)){
+            queryObject[currentKey] = value; 
+        }
+        else if(numberedKeys.includes(currentKey) && validNumber(value)){
+            switch(currentKey){
+                case 'height':
+                    value = (() => {
+                        let v = splitNumerical(value);
+                        return `${v[0]}' ${v[1]}"`;
+                    })()
+                    break;
+                case 'weight':
+                    value = value+" lbs.";
+                    break;
+                case 'reach':
+                    value = value+"\"";
+                    
+            }
+            queryObject[currentKey] = value; 
+        }
+        else if(currentKey === 'code' && /[A-Za-z0-9]/.test(value)){
+            console.log(value)
+            queryObject[currentKey] = value;
+        }
+        else droppedKeys[currentKey] = value;
     }
-    else {
-        //handle error 
-    }
+    let result = await _Fighter.findOne(queryObject, (err,fighters) => { 
+        if(err){
+            console.log(err);
+        }
+        return fighters
+    }).clone().catch((err) => console.log(err));
+
+    return result;
+}
+
+
+route.get('/', (req, res) => {
+    let resultsFromQueryString = handleRequestQuery(req.query);
 })
 
-module.exports = app
+module.exports = route;
