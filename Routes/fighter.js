@@ -2,14 +2,17 @@ const express = require('express');
 var Fighter = require('../fighter');
 const mongoose = require('mongoose'); 
 const schema = require('../schema');
+const bodyParser = require('body-parser');
+
 var dotenv = require('dotenv');
 dotenv.config();
 route = express.Router();
+route.use(bodyParser.urlencoded({ extended: true }));
 
 mongoose.connect(`mongodb://localhost:${process.env.DBPORT}`,
   {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   }
 );
 
@@ -23,7 +26,7 @@ schema.loadClass(Fighter);
 const _Fighter = mongoose.model('Fighter', schema);
 
 
-var handleRequestQuery = async (queryString) => {
+var parseQuery = async (query) => {
     const numberedKeys = ['wins', 'losses', 'draws','weight', 'height', 'reach'];
     const stringKeys = ['firstName', 'lastName'];
     const allowedKeys = numberedKeys.concat(stringKeys, ['code'])
@@ -34,7 +37,7 @@ var handleRequestQuery = async (queryString) => {
     let splitNumerical = (num) => num.toString().split('.');
     for(const i in allowedKeys){
         let currentKey = allowedKeys[i];
-        let value = queryString[currentKey];
+        let value = query[currentKey];
         if(!value) continue;
         if (stringKeys.includes(currentKey) && validString(value)){
             queryObject[currentKey] = value; 
@@ -57,24 +60,68 @@ var handleRequestQuery = async (queryString) => {
             queryObject[currentKey] = value; 
         }
         else if(currentKey === 'code' && /[A-Za-z0-9]/.test(value)){
-            console.log(value)
             queryObject[currentKey] = value;
         }
         else droppedKeys[currentKey] = value;
     }
-    let result = await _Fighter.findOne(queryObject, (err,fighters) => { 
-        if(err){
-            console.log(err);
-        }
-        return fighters
-    }).clone().catch((err) => console.log(err));
-
-    return result;
+    return [queryObject, droppedKeys];
 }
 
+var parseBody = (body) => {
+    if(body){
+        let result = []
+        for(const i in body){
+            let fighterArr = body[i];
+            let subResult = {}
+            for(let i = 0; i < fighterArr.length; i++){
+                let str = fighterArr[i];
+                let keyVal = str.split("=");
+                subResult[keyVal[0]] = keyVal[1];
+            }
+            result.push(subResult);
+        }
+        return result;
+    }
+    return null;
+} 
 
-route.get('/', (req, res) => {
-    let resultsFromQueryString = handleRequestQuery(req.query);
+var queryDB = async (queryObject) => {
+    return await _Fighter.find(queryObject, (err,fighters) => { 
+        if(err){
+            return null;
+        }
+        return fighters;
+    }).clone().catch((err) => null);
+}
+
+route.get('/', async (req, res) => {
+    let cleanedQuery = parseQuery(req.body);
+    let queryObject = cleanedQuery[0];    
+    let dirtyKeys = cleanedQuery[1];    
+    let result = await queryDB(queryObject);
+    if(result) result['unacceptedKeys'] = dirtyKeys;
+    res.send(result);
+})
+
+route.post('/', async (req, res) => {
+    let queries = parseBody(req.body);
+    queries = queries.concat(req.query);
+    cleanedQueries = []
+    for(let i = 0; i < queries.length; i++){
+        let query = queries[i];
+        let cleanedQuery = await parseQuery(query);
+        cleanedQueries.push(cleanedQuery)
+    }
+    
+    let queryResults = []
+    for(const subArr of cleanedQueries){
+        const queryObject = subArr[0];
+        const unacceptedKeys = subArr[1];
+        let result = await queryDB(queryObject);
+        if(result) result['unacceptedKeys'] = unacceptedKeys;
+        queryResults.push(result);
+    }    
+    res.send(queryResults);
 })
 
 module.exports = route;
