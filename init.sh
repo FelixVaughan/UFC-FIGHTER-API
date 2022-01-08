@@ -1,1 +1,0 @@
-npm run scrape & npm run start
