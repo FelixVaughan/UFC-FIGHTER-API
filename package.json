@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "scrape": "sudo systemctl enable mongod && sudo systemctl start mongod && sudo nodemon node webscraper.js"
+    "scrape": "node webscraper.js",
+    "endpoints": "node index.js",
+    "start": "npm run scrape & npm run endpoints"
   },
   "author": "Felix Ezama-Vaughan",
   "license": "ISC",
