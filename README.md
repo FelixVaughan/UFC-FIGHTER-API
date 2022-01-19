@@ -10,7 +10,7 @@ success rates, strike percentages and more.
 
 ## Documentation
 
-
+To access endpoints visit http://ec2-3-84-185-93.compute-1.amazonaws.com:3000/fighter/
 ### API Reference
 
 #### Get all fighter listings
