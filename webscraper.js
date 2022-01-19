@@ -12,19 +12,19 @@ const {JSDOM} = jsdom;
 dotenv.config();
 schema.loadClass(Fighter);
 const _Fighter = mongoose.model('Fighter', schema);
+const DB_ADDR = process.env.MONGO_ADDR || process.env.DEV_DB_ADDR
 
 app.use(express.json());
-mongoose.connect(`mongodb://localhost:${process.env.DBPORT}`,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  }
-);
+(async () => {
+    await mongoose.connect(`mongodb://${DB_ADDR}`,{
+        useNewUrlParser: true, useUnifiedTopology: true
+    })
+})();
 
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error: "));
 db.once("open", () => {
-  console.log(`Webscraper connection establised on port ${process.env.DBPORT}`);
+  console.log(`Webscraper connected to DB on port ${process.env.DBPORT}`);
 });
 
 const BASE_URl = "http://ufcstats.com/statistics/fighters" 
@@ -98,7 +98,9 @@ var scrape = async () => {
     }
 }
 
-if (process.env.DEV == "True") 
-    scrape();
+scrape();
+
+if (process.env.DEV === "True")
+    process.exit();
 else 
     cron.schedule('0 0 * * *', scrape);

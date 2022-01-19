@@ -3,23 +3,22 @@ var Fighter = require('../fighter');
 const mongoose = require('mongoose'); 
 const schema = require('../schema');
 const bodyParser = require('body-parser');
-
+const DB_ADDR = process.env.MONGO_ADDR || process.env.DEV_DB_ADDR;
 var dotenv = require('dotenv');
 dotenv.config();
 route = express.Router();
 route.use(bodyParser.urlencoded({ extended: true }));
 
-mongoose.connect(`mongodb://localhost:${process.env.DBPORT}`,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+(async () => {
+    await mongoose.connect(`mongodb://${DB_ADDR}`,{
+        useNewUrlParser: true, useUnifiedTopology: true
+    })
+})();
 
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error: "));
 db.once("open", () => {
-  console.log(`Endpoint Mongo connection establised on port ${process.env.DBPORT}`);
+  console.log(`API connection to DB establised on port ${process.env.DBPORT}`);
 });
 
 schema.loadClass(Fighter);
@@ -68,6 +67,7 @@ var parseQuery = async (query) => {
 }
 
 var parseBody = (body) => {
+    console.log(body)
     if(body){
         let result = []
         for(const i in body){
@@ -95,10 +95,11 @@ var queryDB = async (queryObject) => {
 }
 
 route.get('/', async (req, res) => {
-    let cleanedQuery = parseQuery(req.body);
+    let cleanedQuery = await parseQuery(req.query);
     let queryObject = cleanedQuery[0];    
     let dirtyKeys = cleanedQuery[1];    
     let result = await queryDB(queryObject);
+    console.log(result)
     if(result) result['unacceptedKeys'] = dirtyKeys;
     res.send(result);
 })
@@ -112,12 +113,12 @@ route.post('/', async (req, res) => {
         let cleanedQuery = await parseQuery(query);
         cleanedQueries.push(cleanedQuery)
     }
-    
+    console.log(cleanedQueries)
     let queryResults = []
     for(const subArr of cleanedQueries){
         const queryObject = subArr[0];
         const unacceptedKeys = subArr[1];
-        let result = await queryDB(queryObject);
+        let result = Object.keys(queryObject).length != 0 ? await queryDB(queryObject) : null
         if(result) result['unacceptedKeys'] = unacceptedKeys;
         queryResults.push(result);
     }    

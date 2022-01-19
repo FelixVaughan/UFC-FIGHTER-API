@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "scrape": "node webscraper.js",
-    "endpoints": "node index.js",
-    "start": "npm run scrape & npm run endpoints"
+    "deploy_endpoints": "node index.js",
+    "start": "npm run scrape & npm run deploy_endpoints"
   },
   "author": "Felix Ezama-Vaughan",
   "license": "ISC",

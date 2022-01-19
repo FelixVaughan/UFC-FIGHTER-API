@@ -1,0 +1,1 @@
+sudo dockerd &> /dev/null & docker-compose build && docker-compose up
