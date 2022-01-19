@@ -1,0 +1,29 @@
+version: '3'
+services:
+  nodeapp: 
+    container_name: nodeapp_container
+    restart: always
+    build: ./
+    env_file: .env
+    ports:
+      - '3000:3000'
+    links:
+      - 'mongodb'
+    depends_on:
+      - 'mongodb'
+    environment:
+      MONGO_ADDR: mongodb:27017
+    networks: 
+      - api_internal
+  mongodb:
+    container_name:  mongodb_container
+    image: mongo:latest
+    volumes:
+      - ~/mongo:/data/db
+    ports: 
+      - '27017:27017'
+    networks:
+      - api_internal
+networks:
+  api_internal:
+    driver: bridge
