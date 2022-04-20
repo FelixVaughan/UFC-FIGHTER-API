@@ -117,3 +117,4 @@ body = {
 }
 res = requests.post('http://ec2-3-84-185-93.compute-1.amazonaws.com:3000/fighter/', data=body)
 pprint.pprint(res.json())
+```
