@@ -30,6 +30,7 @@ var fighterSchema = new Schema({
             transform: function (doc, ret) {
                 delete ret._id;
                 delete ret.__v;
+                ret.fights = ret.fights.map(fight => JSON.parse(fight))
             }
         }
     }

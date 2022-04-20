@@ -111,7 +111,7 @@ class Fighter {
             Object.keys(fight).map((key, index) => {
                     fight[key] = fight[key].trim();
             });
-            const stringifiedFight = JSON.stringify(fight, undefined, 4);
+            const stringifiedFight = JSON.stringify(fight);
             this.fights.push(stringifiedFight);
         }
     }

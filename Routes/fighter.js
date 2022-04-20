@@ -3,13 +3,23 @@ var Fighter = require('../fighter');
 const mongoose = require('mongoose');
 const schema = require('../schema');
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
 var dotenv = require('dotenv');
 dotenv.config();
+
 const DB_ADDR = process.env.MONGO_ADDR || process.env.DEV_DB_ADDR;
 route = express.Router();
 route.use(bodyParser.urlencoded({
     extended: true
 }));
+
+const limiter = rateLimit({
+	windowMs: 60 * 1000, // 1 minute
+	max: 20, // Limit each IP to 20 requests per `window` (here, per 15 minutes)
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+})
+route.use(limiter);
 
 
 (async () => {
@@ -99,7 +109,6 @@ route.get('/', async (req, res) => {
     let cleanedQuery = await parseQuery(req.query);
     let queryObject = cleanedQuery[0];
     let dirtyKeys = cleanedQuery[1];
-    console.log(dirtyKeys)
     let result = await queryDB(queryObject);
     if (result) result['unacceptedKeys'] = dirtyKeys;
     res.send(result);

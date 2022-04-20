@@ -24,7 +24,7 @@ app.use(express.json());
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error: "));
 db.once("open", () => {
-  console.log(`Webscraper connected to DB on port ${process.env.DBPORT}`);
+  console.log(`Webscraper connected to DB on port ${process.env.DB_ADDR}`);
 });
 
 const BASE_URl = "http://ufcstats.com/statistics/fighters" 
@@ -98,9 +98,7 @@ var scrape = async () => {
     }
 }
 
-scrape();
 
-if (process.env.DEV === "True")
-    process.exit();
+if (process.env.DEV === "True") scrape();
 else 
-    cron.schedule('0 0 * * *', scrape);
+    cron.schedule('0 0 * * 0', scrape);
