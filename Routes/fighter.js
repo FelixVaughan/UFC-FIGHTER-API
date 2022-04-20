@@ -36,7 +36,7 @@ var parseQuery = async (query) => {
     let droppedKeys = {};
     let queryObject = {};
     let validNumber = (num) => !isNaN(num);
-    let validString = (str) => (str.length > 0) && /^[A-Za-z]*$/.test(str);
+    let validString = (str) => (str.length > 0) && /^[A-Za-z-]*$/.test(str);
     let splitNumerical = (num) => num.toString().split('.');
     for (const i in allowedKeys) {
         let currentKey = allowedKeys[i];
@@ -130,7 +130,6 @@ route.post('/', async (req, res) => {
             queryResults.push(result);
         }
     }
-    // console.log(queryResults)
     res.json(queryResults);
 })
 
