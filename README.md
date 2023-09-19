@@ -1,3 +1,4 @@
+![alt text](https://github.com/FelixVaughan/UFC-FIGHTER-API/blob/main/mma-api.jpg)
 
 # UFC-Fighter-API
 
