@@ -1,5 +1,3 @@
-![alt text](https://github.com/FelixVaughan/UFC-FIGHTER-API/blob/main/mma-api.jpg)
-
 # UFC-Fighter-API
 
 An API containing statistics on current and old UFC fighters. These include
